@@ -100,10 +100,6 @@ controls.update()
 
 var interval = 0.005
 
-// var cube = createCubeMesh(1, 1, 1);
-// scene.add(cube)
-console.log(cubes)
-
 var clock = new THREE.Clock()
 var deltaTotal = 0;
 var intervalCounter = 0;
@@ -121,10 +117,9 @@ function animate() {
     let halfWidth = Math.floor(blocks.width / 2);
     for (var i = 0; i < halfWidth + 1; i++) {
 
-        let sizeOffset = (index / 2) + (deltaTotal * 100) / 40;
+        let sizeOffset = (index / 2) + (deltaTotal * 100) / 25;
         let sizeDivisions = Math.floor(sizeOffset / 4) % 2;
-        let size = (sizeOffset % 4);
-        if (sizeDivisions === 1) size = 4 - size
+        let size = Math.sin(sizeOffset);
 
         var directionLength = index * 2;
         var directions = 4;
@@ -160,24 +155,7 @@ function animate() {
 
         index += 1;
     }
-    debugger 
 
-
-    // while (deltaTotal > interval) {
-    //     deltaTotal = deltaTotal - interval;
-
-    //     if (intervalCounter < blocks.width * blocks.height) {
-    //         var j = intervalCounter % blocks.width;
-    //         var i = Math.floor(intervalCounter / blocks.width);
-
-    //         // cubes[i][j].position.y += 1;
-    //         cubes[i][j].material.color.setHex( 0xff0000 );
-
-    //         planeIndex += 1;
-    //     }
-
-    //     intervalCounter += 1;
-    // }
 
 }
 animate();

@@ -1,6 +1,6 @@
 function createCubeMesh(x, y, z) {
     var geometry = new THREE.BoxGeometry(x, y, z);
-    var material = new THREE.MeshLambertMaterial();
+    var material = new THREE.MeshNormalMaterial();
     var cube = new THREE.Mesh(geometry, material);
     return cube;
 }
@@ -71,38 +71,38 @@ directionalLights[0].position.y += 2
 
 var blocks = { width: 25, height: 25 }
 
-var planes = new Array(blocks.width)
+var cubes = new Array(blocks.width)
 for (var i = 0; i < blocks.width; i++) {
-    planes[i] = new Array(blocks.height)
+    cubes[i] = new Array(blocks.height)
 }
 
 var padding = 0.05;
 for (var i = 0; i < blocks.width; i++) {
     for (var j = 0; j < blocks.height; j++) {
-        var plane = createPlaneMesh(1 - padding, 1 - padding, 1 - padding)
-        plane.rotation.x += toRadians(90);
-        plane.position.y -= 1;
+        var cube = createCubeMesh(1 - padding, 1 - padding, 1 - padding)
+        cube.rotation.x += toRadians(90);
+        cube.position.y -= 1;
 
-        plane.position.x = i
-        plane.position.z = -j
+        cube.position.x = i
+        cube.position.z = -j
 
-        planes[i][j] = plane;
+        cubes[i][j] = cube;
 
-        scene.add(planes[i][j])
+        scene.add(cubes[i][j])
     }
 }
 
 camera.position.z = 10;
 camera.position.x = blocks.width / 2;
 camera.position.y = 5;
-controls.target = new THREE.Vector3( blocks.width / 2, 0, -blocks.height / 2 );
+controls.target = new THREE.Vector3(blocks.width / 2, 0, -blocks.height / 2);
 controls.update()
 
 var interval = 0.005
 
 // var cube = createCubeMesh(1, 1, 1);
 // scene.add(cube)
-console.log(planes)
+console.log(cubes)
 
 var clock = new THREE.Clock()
 var deltaTotal = 0;
@@ -117,24 +117,67 @@ function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
 
-    while (deltaTotal > interval) {
-        deltaTotal = deltaTotal - interval;
+    let index = 0;
+    let halfWidth = Math.floor(blocks.width / 2);
+    for (var i = 0; i < halfWidth + 1; i++) {
 
-        if (intervalCounter < blocks.width * blocks.height) {
-            var j = intervalCounter % blocks.width;
-            var i = Math.floor(intervalCounter / blocks.width);
+        let sizeOffset = (index / 2) + (deltaTotal * 100) / 40;
+        let sizeDivisions = Math.floor(sizeOffset / 4) % 2;
+        let size = (sizeOffset % 4);
+        if (sizeDivisions === 1) size = 4 - size
 
-            // planes[i][j].position.y += 1;
-            planes[i][j].material.color.setHex( 0xff0000 );
+        var directionLength = index * 2;
+        var directions = 4;
+        var cubesToCover = directionLength * directions;
+        if (index === 0) {
+            cubes[halfWidth][halfWidth].scale.z = 1 + size;
+            cubes[halfWidth][halfWidth].position.y = (size / 2);
+        }
+        for (let cubeIndex = 0; cubeIndex < cubesToCover; cubeIndex++) {
 
-            planeIndex += 1;
+            let direction = Math.floor(cubeIndex / directionLength);
+            let offset = cubeIndex % directionLength;
+            let x = Math.floor(blocks.width / 2) + i;
+            let y = Math.floor(blocks.height / 2) + i;
+            if (direction == 0)  {
+                y -= offset;
+            }
+            else if (direction == 1) {
+                y -= (i * 2)
+                x -= offset
+            }
+            else if (direction == 2) {
+                y += (-i * 2) + offset
+                x -= (i * 2)
+            } else if (direction == 3) {
+                x += (-i * 2) + offset
+            }
+
+            cubes[x][y].scale.z = 1 + size;
+            cubes[x][y].position.y = (size / 2);
+            console.log(x, y)
         }
 
-        intervalCounter += 1;
+        index += 1;
     }
+    debugger 
 
-    // cube.rotation.x -= 0.05
-    // cube.rotation.z -= 0.05
+
+    // while (deltaTotal > interval) {
+    //     deltaTotal = deltaTotal - interval;
+
+    //     if (intervalCounter < blocks.width * blocks.height) {
+    //         var j = intervalCounter % blocks.width;
+    //         var i = Math.floor(intervalCounter / blocks.width);
+
+    //         // cubes[i][j].position.y += 1;
+    //         cubes[i][j].material.color.setHex( 0xff0000 );
+
+    //         planeIndex += 1;
+    //     }
+
+    //     intervalCounter += 1;
+    // }
 
 }
 animate();

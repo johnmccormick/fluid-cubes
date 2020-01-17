@@ -46,8 +46,12 @@ document.body.addEventListener("keyup", e => {
 })
 
 
+var blocks = { width: 70, height: 70 }
+
+var cameraPadding = 10;
+
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+var camera = new THREE.OrthographicCamera(-blocks.width - cameraPadding, blocks.width + cameraPadding, blocks.height + cameraPadding, -blocks.height - cameraPadding, -blocks.height, blocks.height);
 
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -60,23 +64,20 @@ window.onresize = () => {
     camera.updateProjectionMatrix()
 }
 
-var controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-
 // White directional light at half intensity shining from the top.
 var directionalLights = [new THREE.DirectionalLight(0xffffff, 0.5), new THREE.DirectionalLight(0xffffff, 0.5), new THREE.DirectionalLight(0xffffff, 0.5)];
 scene.add(directionalLights[0]);
 
 directionalLights[0].position.y += 2
 
-var blocks = { width: 25, height: 25 }
-
 var cubes = new Array(blocks.width)
 for (var i = 0; i < blocks.width; i++) {
     cubes[i] = new Array(blocks.height)
 }
 
-var padding = 0.05;
+var group = new THREE.Group();
+
+var padding = 0.1;
 for (var i = 0; i < blocks.width; i++) {
     for (var j = 0; j < blocks.height; j++) {
         var cube = createCubeMesh(1 - padding, 1 - padding, 1 - padding)
@@ -87,16 +88,24 @@ for (var i = 0; i < blocks.width; i++) {
         cube.position.z = -j
 
         cubes[i][j] = cube;
-
-        scene.add(cubes[i][j])
+        group.add(cubes[i][j])
     }
 }
 
-camera.position.z = 10;
-camera.position.x = blocks.width / 2;
-camera.position.y = 5;
-controls.target = new THREE.Vector3(blocks.width / 2, 0, -blocks.height / 2);
-controls.update()
+scene.add(group)
+
+// camera.position.z = 5;
+camera.position.x = 0;
+camera.position.y = blocks.height / 2;
+
+// var magicAngle = toRadians(Math.atan(1/Math.sqrt(2)));
+var magicAngle = toRadians(54.735);
+
+var rotationVectorX = new THREE.Vector3( 1, 0, 0)
+var rotationVectorY = new THREE.Vector3( 0, 0, 1)
+
+// var controls = new THREE.OrbitControls(camera, renderer.domElement);
+// controls.target = new THREE.Vector3(blocks.width / 2, 0, -blocks.height / 2);
 
 var interval = 0.005
 
@@ -106,6 +115,33 @@ var intervalCounter = 0;
 var planeIndex = 0;
 var animationQueue = [];
 
+function distanceTo(v1, v2) {
+    var dx = v1.x - v2.x;
+    var dy = v1.y - v2.y;
+    var dz = v1.z - v2.z;
+
+    return Math.sqrt(dx * dx + dy * dy + dz * dz )
+}
+
+function map_range(value, low1, high1, low2, high2) {
+    return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
+
+var centerPoint = new THREE.Vector3(blocks.width / 2, -1, -blocks.height / 2);
+
+let highestDist = 20;
+let lowestDist = 0;
+
+let speed = 5;
+
+var magicAngle = toRadians(54.735);
+
+var rotationVectorX = new THREE.Vector3( 1, 0, 0)
+var rotationVectorY = new THREE.Vector3( 0, 1, 0)
+
+group.rotateOnAxis( rotationVectorX, magicAngle);
+group.rotateOnAxis( rotationVectorY,  toRadians(45));
+
 function animate() {
     var deltaTime = clock.getDelta();
     deltaTotal += deltaTime;
@@ -113,50 +149,28 @@ function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
 
-    let index = 0;
-    let halfWidth = Math.floor(blocks.width / 2);
-    for (var i = 0; i < halfWidth + 1; i++) {
+    let blockWidth = blocks.width;
+    for (let y = 0; y < blocks.height; y++) {
+        for (let x = 0; x < blocks.width; x++) {
+            let cubePos = cubes[x][y].position;
+            let cubePosVector = new THREE.Vector3( cubePos.x, cubePos.y, cubePos. z);
+            let distanceFromCenter = cubePosVector.distanceTo( centerPoint );
 
-        let sizeOffset = (index / 2) + (deltaTotal * 100) / 25;
-        let sizeDivisions = Math.floor(sizeOffset / 4) % 2;
-        let size = Math.sin(sizeOffset);
+            let speedDelta = Math.sin(deltaTotal * 2);
+            let speedDeltaDifference = map_range(speedDelta, -1, 1, 3, 7)
+            let delta = Math.sin(deltaTotal / 20);
+            let differenceDelta = map_range(delta, -1, 1, 2, 7)
 
-        var directionLength = index * 2;
-        var directions = 4;
-        var cubesToCover = directionLength * directions;
-        if (index === 0) {
-            cubes[halfWidth][halfWidth].scale.z = 1 + size;
-            cubes[halfWidth][halfWidth].position.y = (size / 2);
+            let distanceRemapped = map_range(distanceFromCenter, 0, 20, -differenceDelta, differenceDelta)
+
+            let sin = Math.sin((deltaTotal * -1 * speed) + distanceRemapped);
+            let size = map_range(sin, -1, 1, 10, 30)
+            
+            cubes[x][y].scale.z = size;
+            // cubes[x][y].position.y = size / 2;
+    
         }
-        for (let cubeIndex = 0; cubeIndex < cubesToCover; cubeIndex++) {
-
-            let direction = Math.floor(cubeIndex / directionLength);
-            let offset = cubeIndex % directionLength;
-            let x = Math.floor(blocks.width / 2) + i;
-            let y = Math.floor(blocks.height / 2) + i;
-            if (direction == 0)  {
-                y -= offset;
-            }
-            else if (direction == 1) {
-                y -= (i * 2)
-                x -= offset
-            }
-            else if (direction == 2) {
-                y += (-i * 2) + offset
-                x -= (i * 2)
-            } else if (direction == 3) {
-                x += (-i * 2) + offset
-            }
-
-            cubes[x][y].scale.z = 1 + size;
-            cubes[x][y].position.y = (size / 2);
-            console.log(x, y)
-        }
-
-        index += 1;
     }
-
-
 }
 animate();
 clock.start()

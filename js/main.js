@@ -46,7 +46,7 @@ document.body.addEventListener("keyup", e => {
 })
 
 
-var blocks = { width: 70, height: 70 }
+var blocks = { width: 14, height: 14 }
 
 var cameraPadding = 10;
 

@@ -1,29 +1,106 @@
 <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Rising sinking cubes</title>
-        <style>
-            body {margin: 0; }
-            canvas {width: 100%; height: 100% }
-            .info-panel {
-                position: absolute;
-                top: 10px;
-                text-align: left;
-                z-index: 100;
-                color: white;
-                display: block;
+
+<head>
+    <meta charset="utf-8">
+    <title>Fluid cubes</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            text-align: left;
+            z-index: 100;
+            color: white;
+            display: block;
+        }
+
+        #slider-container {
+            opacity: 0;
+            transition: 0.1s;
+            margin: 5px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #controls {
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="js/three.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script src="js/jm-math.js"></script>
+    <script src="js/main.js"></script>
+    <div class="info-panel">
+        <div id="info"></div>
+        <div id="slider-container">
+            <label>Cube depth: <span id="cube-depth-output"></span></label>
+            <input type="range" min="11" max="50" value="16" class="slider" id="cube-depth-slider">
+            <label>Speed: <span id="speed-output"></span></label>
+            <input type="range" min="1" max="10000" value="2000" class="slider" id="speed-slider">
+            <div><input type="checkbox" id="panel-visible-checkbox"><label for="panel-visible-checkbox">Keep panel visible</label></div>
+        </div>
+    </div>
+    <script>
+        var sliderContainer = document.getElementById("slider-container");
+
+        var cubeDepthSlider = document.getElementById("cube-depth-slider");
+        var cubeDepthOutput = document.getElementById("cube-depth-output");
+        cubeDepthOutput.innerHTML = cubeDepthSlider.value;
+        blocks.width = parseInt(cubeDepthSlider.value);
+        blocks.height = parseInt(cubeDepthSlider.value);
+        reconstruct()
+
+        var speedSlider = document.getElementById("speed-slider");
+        var speedOutput = document.getElementById("speed-output");
+        var speedSliderValue = speedSlider.value / 1000;
+        speedOutput.innerHTML = speedSliderValue;
+        speed = speedSliderValue;
+
+        cubeDepthSlider.oninput = function () {
+            cubeDepthOutput.innerHTML = this.value;
+            blocks.width = parseInt(this.value);
+            blocks.height = parseInt(this.value);
+            reconstruct()
+        }
+
+        speedSlider.oninput = function () {
+            var value = this.value / 1000;
+            speedOutput.innerHTML = value;
+            speed = value;
+        }
+
+        var slidersHideTimeout;
+        var panelVisibleCheckbox = document.getElementById("panel-visible-checkbox");
+        var panelAlwaysVisible = panelVisibleCheckbox.checked;
+        if (panelAlwaysVisible) sliderContainer.style.opacity = 1;
+
+        panelVisibleCheckbox.onclick = function () {
+            panelAlwaysVisible = panelVisibleCheckbox.checked;
+            if (panelAlwaysVisible) {
+                sliderContainer.style.opacity = 1;
+                clearTimeout(slidersHideTimeout);
             }
-            #controls {
-                padding-bottom: 10px;
-            }
-        </style>
-    </head>
-        <body>
-            <script src="js/three.js"></script>
-            <script src="js/OrbitControls.js"></script>
-            <script src="js/jm-math.js"></script>
-            <script src="js/main.js"></script>
-            <div class="info-panel">
-                <div id="info"></div>
-    </body>
+        }
+
+        document.addEventListener("mousemove", function () {
+            if (panelAlwaysVisible) return;
+            clearTimeout(slidersHideTimeout);
+            sliderContainer.style.opacity = 1;
+            slidersHideTimeout = setTimeout(function () { sliderContainer.style.opacity = 0 }, 1500)
+        })
+
+    </script>
+</body>
+
 </html>
